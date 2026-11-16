@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AlgoWall｜你的演算法長什麼樣子？</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Noto Sans TC & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            cream: '#FDFBF7',
+            cork: '#F4EFE6',
+            ink: '#1E293B',
+          },
+          boxShadow: {
+            'note': '4px 6px 0px rgba(30, 41, 59, 0.12)',
+            'note-hover': '8px 12px 0px rgba(30, 41, 59, 0.18)',
+            'pop': '3px 3px 0px #1E293B',
+            'pop-lg': '6px 6px 0px #1E293B',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* 基礎背景與網格點點質感，營造青春拼貼筆記本氛圍 */
+    body {
+      background-color: #FDFBF7;
+      background-image: radial-gradient(#CBD5E1 1.2px, transparent 1.2px);
+      background-size: 24px 24px;
+      color: #1E293B;
+      overflow-x: hidden;
+    }
+
+    /* 便利貼膠帶效果 */
+    .washi-tape {
+      position: relative;
+    }
+    .washi-tape::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-2deg);
+      width: 72px;
+      height: 22px;
+      background-color: rgba(255, 255, 255, 0.65);
+      border-left: 1px dashed rgba(0,0,0,0.1);
+      border-right: 1px dashed rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* 便利貼微傾斜與懸浮動畫 */
+    .sticky-card {
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .sticky-card:hover {
+      transform: translateY(-6px) rotate(0deg) scale(1.02) !important;
+      z-index: 20;
+    }
+
+    /* 自訂捲軸 */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F4EFE6;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+
+    /* 淡入動畫 */
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-pop-in {
+      animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- 頂部導覽列 -->
+  <header class="sticky top-0 z-40 bg-cream/90 backdrop-blur-md border-b-2 border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Logo -->
+      <button onclick="switchView('home')" class="flex items-center gap-2.5 group text-left">
+        <div class="w-10 h-10 rounded-xl bg-amber-300 border-2 border-slate-800 shadow-pop flex items-center justify-center text-xl group-hover:rotate-6 transition-transform">
+          🧩
+        </div>
+        <div>
+          <span class="font-black text-lg sm:text-xl tracking-tight text-slate-900 block leading-none">AlgoWall</span>
+          <span class="text-xs font-bold text-slate-500">青少年演算法觀察室</span>
+        </div>
+      </button>
+
+      <!-- 導覽切換按鈕 -->
+      <nav class="flex items-center gap-2 sm:gap-3">
+        <button id="nav-quiz" onclick="switchView('quiz')" class="px-3.5 py-2 rounded-xl text-sm font-bold border-2 border-slate-800 bg-white hover:bg-amber-100 shadow-pop active:translate-y-0.5 transition-all flex items-center gap-1.5">
+          <span>🔮</span>
+          <span>測驗探索</span>
+        </button>
+        <button id="nav-board" onclick="switchView('board')" class="px-3.5 py-2 rounded-xl text-sm font-bold border-2 border-slate-800 bg-lime-300 hover:bg-lime-400 shadow-pop active:translate-y-0.5 transition-all flex items-center gap-1.5">
+          <span>📌</span>
+          <span>演算法佈告欄</span>
+          <span id="board-count-badge" class="ml-0.5 px-1.5 py-0.2 bg-slate-800 text-white text-xs rounded-full">6</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 主要內容容器 -->
+  <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-6 sm:py-10">
+
+    <!-- ==================== 視圖 0：首頁歡迎區 ==================== -->
+    <section id="view-home" class="animate-pop-in">
+      <div class="max-w-3xl mx-auto text-center py-6 sm:py-12">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-100 border-2 border-slate-800 text-indigo-900 font-bold text-xs sm:text-sm mb-6 shadow-pop">
+          <span>✨ 100% 匿名探索</span>
+          <span>•</span>
+          <span>看看同齡人都在滑什麼</span>
+        </div>
+
+        <h1 class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-5">
+          你以為的你，<br class="sm:hidden" />跟<span class="bg-amber-300 px-2.5 py-0.5 rounded-xl border-2 border-slate-800 inline-block -rotate-1">演算法</span>認識的你一樣嗎？
+        </h1>
+
+        <p class="text-base sm:text-lg text-slate-600 font-medium max-w-2xl mx-auto mb-8 leading-relaxed">
+          每天滑手機好幾個小時，演算法早就比你更懂你的喜好！<br class="hidden sm:inline" />
+          透過 5 個日常情境題測出你的「隱藏社群人格」，對比你的自我認知，再把你的私藏寶藏帳號貼上同齡佈告欄！
+        </p>
+
+        <!-- 三步驟流程卡片預覽 -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left mb-10">
+          <div class="bg-sky-100 border-2 border-slate-800 rounded-2xl p-4 shadow-note -rotate-1">
+            <div class="w-8 h-8 rounded-lg bg-white border-2 border-slate-800 font-black flex items-center justify-center mb-2">1</div>
+            <h3 class="font-extrabold text-slate-900 text-base mb-1">滑手機直覺測驗</h3>
+            <p class="text-xs sm:text-sm text-slate-700">5 題超有共鳴的情境題，先不暴雷結果，保留神秘感！</p>
+          </div>
+          <div class="bg-rose-100 border-2 border-slate-800 rounded-2xl p-4 shadow-note rotate-1">
+            <div class="w-8 h-8 rounded-lg bg-white border-2 border-slate-800 font-black flex items-center justify-center mb-2">2</div>
+            <h3 class="font-extrabold text-slate-900 text-base mb-1">自覺 vs 實際揭曉</h3>
+            <p class="text-xs sm:text-sm text-slate-700">勾選你以為常看的內容，一鍵揭開潛意識與演算法的反差！</p>
+          </div>
+          <div class="bg-amber-100 border-2 border-slate-800 rounded-2xl p-4 shadow-note -rotate-1">
+            <div class="w-8 h-8 rounded-lg bg-white border-2 border-slate-800 font-black flex items-center justify-center mb-2">3</div>
+            <h3 class="font-extrabold text-slate-900 text-base mb-1">張貼到同齡佈告欄</h3>
+            <p class="text-xs sm:text-sm text-slate-700">製作專屬演算法便利貼，交換彼此的私藏寶藏帳號清單。</p>
+          </div>
+        </div>
+
+        <!-- CTA 按鈕群 -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button onclick="startQuiz()" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-amber-300 hover:bg-amber-400 border-2 border-slate-800 font-black text-lg text-slate-900 shadow-pop-lg active:translate-y-1 transition-all flex items-center justify-center gap-2">
+            <span>🚀 開始測驗（約 1 分鐘）</span>
+          </button>
+          <button onclick="switchView('board')" class="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white hover:bg-slate-50 border-2 border-slate-800 font-bold text-base text-slate-800 shadow-pop active:translate-y-1 transition-all flex items-center justify-center gap-2">
+            <span>👀 直接逛逛同齡佈告欄</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 視圖 1：第一階段 - 社群演算法人格測驗 ==================== -->
+    <section id="view-quiz" class="hidden animate-pop-in">
+      <div class="max-w-2xl mx-auto">
+        <!-- 階段指示器 -->
+        <div class="flex items-center justify-between mb-6 bg-white border-2 border-slate-800 rounded-2xl p-3 shadow-pop">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-1 rounded-lg bg-sky-300 border border-slate-800 text-xs font-black">STAGE 1 / 3</span>
+            <span class="font-bold text-sm sm:text-base">滑手機直覺測驗</span>
+          </div>
+          <span id="quiz-progress-text" class="text-sm font-black text-slate-600">第 1 / 5 題</span>
+        </div>
+
+        <!-- 進度條 -->
+        <div class="w-full h-3.5 bg-slate-200 rounded-full border-2 border-slate-800 overflow-hidden mb-6">
+          <div id="quiz-progress-bar" class="h-full bg-sky-400 transition-all duration-300" style="width: 20%;"></div>
+        </div>
+
+        <!-- 題目便利貼卡片 -->
+        <div class="bg-white border-2 border-slate-800 rounded-3xl p-6 sm:p-8 shadow-pop-lg relative">
+          <div class="inline-block px-3 py-1 rounded-full bg-amber-100 border border-slate-800 text-xs font-bold text-slate-800 mb-4">
+            📱 情境模擬中...
+          </div>
+          <h2 id="quiz-question" class="text-xl sm:text-2xl font-black text-slate-900 leading-snug mb-6">
+            題目載入中...
+          </h2>
+
+          <!-- 選項列表 -->
+          <div id="quiz-options" class="space-y-3">
+            <!-- JS 動態生成選項 -->
+          </div>
+
+          <!-- 底部操作列 -->
+          <div class="mt-8 pt-4 border-t-2 border-dashed border-slate-200 flex items-center justify-between">
+            <button id="btn-prev-q" onclick="prevQuestion()" class="px-4 py-2 rounded-xl border-2 border-slate-800 bg-slate-100 hover:bg-slate-200 font-bold text-sm disabled:opacity-40 disabled:pointer-events-none transition-all">
+              ← 上一題
+            </button>
+            <span class="text-xs font-bold text-slate-400">憑第一直覺選就好！</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 視圖 2：第二階段 - 自我認知勾選 & 揭曉對比 ==================== -->
+    <section id="view-self-check" class="hidden animate-pop-in">
+      <div class="max-w-2xl mx-auto">
+        <!-- 階段指示器 -->
+        <div class="flex items-center justify-between mb-6 bg-white border-2 border-slate-800 rounded-2xl p-3 shadow-pop">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-1 rounded-lg bg-rose-300 border border-slate-800 text-xs font-black">STAGE 2 / 3</span>
+            <span class="font-bold text-sm sm:text-base">靈魂拷問：自我認知盤點</span>
+          </div>
+          <span class="text-xs font-bold px-2.5 py-1 bg-amber-100 rounded-lg border border-slate-800">🔒 測驗結果已鎖定</span>
+        </div>
+
+        <!-- 勾選表單卡片 -->
+        <div id="self-check-form-box" class="bg-white border-2 border-slate-800 rounded-3xl p-6 sm:p-8 shadow-pop-lg">
+          <div class="text-center mb-6">
+            <div class="text-4xl mb-2">🤔</div>
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mb-2">先別急著看結果！</h2>
+            <p class="text-sm sm:text-base text-slate-600 font-medium">
+              在揭曉系統分析之前，你覺得自己平時滑 IG / TikTok / YouTube 時，<br class="hidden sm:inline" />
+              <span class="underline decoration-rose-400 decoration-4 font-bold text-slate-800">「自以為」最常看哪幾類內容？</span>（可複選 1～4 項）
+            </p>
+          </div>
+
+          <!-- 多選標籤網格 -->
+          <div id="self-tags-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+            <!-- JS 動態生成標籤選項 -->
+          </div>
+
+          <button onclick="revealResult()" class="w-full py-4 rounded-2xl bg-rose-400 hover:bg-rose-500 text-white border-2 border-slate-800 font-black text-lg shadow-pop-lg active:translate-y-1 transition-all flex items-center justify-center gap-2">
+            <span>✨ 揭曉我的演算法真相！</span>
+          </button>
+        </div>
+
+        <!-- 揭曉對比結果卡片 (初始隱藏，點擊揭曉後顯示) -->
+        <div id="reveal-result-box" class="hidden space-y-6 animate-pop-in">
+          <div class="bg-white border-2 border-slate-800 rounded-3xl p-6 sm:p-8 shadow-pop-lg overflow-hidden relative">
+            <div class="text-center mb-6">
+              <span id="contrast-badge" class="inline-block px-4 py-1.5 rounded-full bg-amber-300 border-2 border-slate-800 font-black text-xs sm:text-sm mb-3 shadow-pop">
+                ⚡ 反差萌警報！
+              </span>
+              <h2 class="text-2xl sm:text-3xl font-black text-slate-900">你的演算法雙面檔案</h2>
+            </div>
+
+            <!-- 左右對比區 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <!-- 左邊：你以為的自己 -->
+              <div class="bg-slate-100 border-2 border-slate-800 rounded-2xl p-5 relative">
+                <div class="text-xs font-black text-slate-500 uppercase tracking-wider mb-1">🧠 你以為的自己</div>
+                <h3 class="text-lg font-extrabold text-slate-800 mb-3">自覺常看的內容</h3>
+                <div id="result-perceived-tags" class="flex flex-wrap gap-2">
+                  <!-- JS 填入使用者勾選的標籤 -->
+                </div>
+              </div>
+
+              <!-- 右邊：實際演算法人格 -->
+              <div id="result-actual-card" class="bg-sky-100 border-2 border-slate-800 rounded-2xl p-5 relative">
+                <div class="text-xs font-black text-slate-600 uppercase tracking-wider mb-1">🤖 測驗分析實際人格</div>
+                <div class="flex items-center gap-2.5 mb-2">
+                  <span id="result-persona-icon" class="text-3xl">🔭</span>
+                  <h3 id="result-persona-title" class="text-2xl font-black text-slate-900">知識探索型</h3>
+                </div>
+                <p id="result-persona-tagline" class="text-xs font-bold text-slate-700 bg-white/70 px-2.5 py-1 rounded-lg border border-slate-800/20 inline-block">
+                  #深夜維基百科流浪漢
+                </p>
+              </div>
+            </div>
+
+            <!-- 幽默解析與反差評語 -->
+            <div class="bg-amber-50 border-2 border-slate-800 rounded-2xl p-5 mb-6">
+              <h4 class="font-black text-base text-slate-900 mb-1.5 flex items-center gap-1.5">
+                <span>💬 演算法真心話解析：</span>
+              </h4>
+              <p id="result-analysis-text" class="text-sm sm:text-base text-slate-700 leading-relaxed font-medium">
+                解析文案載入中...
+              </p>
+            </div>
+
+            <!-- 前往第三步按鈕 -->
+            <div class="flex flex-col sm:flex-row gap-3">
+              <button onclick="goToProfileBuilder()" class="flex-1 py-4 px-6 rounded-2xl bg-lime-300 hover:bg-lime-400 border-2 border-slate-800 font-black text-base sm:text-lg text-slate-900 shadow-pop-lg active:translate-y-1 transition-all flex items-center justify-center gap-2">
+                <span>📌 建立我的 Profile 貼上佈告欄</span>
+              </button>
+              <button onclick="startQuiz()" class="py-4 px-5 rounded-2xl bg-white hover:bg-slate-100 border-2 border-slate-800 font-bold text-sm text-slate-700 shadow-pop transition-all">
+                🔄 重測一次
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 視圖 3：第三階段 - 建立個人 Profile 並貼上佈告欄 ==================== -->
+    <section id="view-builder" class="hidden animate-pop-in">
+      <div class="max-w-3xl mx-auto">
+        <!-- 階段指示器 -->
+        <div class="flex items-center justify-between mb-6 bg-white border-2 border-slate-800 rounded-2xl p-3 shadow-pop">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-1 rounded-lg bg-lime-300 border border-slate-800 text-xs font-black">STAGE 3 / 3</span>
+            <span class="font-bold text-sm sm:text-base">製作你的演算法便利貼</span>
+          </div>
+          <button onclick="switchView('self-check')" class="text-xs font-bold underline text-slate-600 hover:text-slate-900">
+            ← 回去看對比結果
+          </button>
+        </div>
+
+        <form id="profile-form" onsubmit="handlePublishProfile(event)" class="bg-white border-2 border-slate-800 rounded-3xl p-6 sm:p-8 shadow-pop-lg space-y-6">
+          <!-- 頂部帶入的測驗結果摘要 -->
+          <div class="p-4 rounded-2xl bg-cork border-2 border-slate-800 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <span id="builder-persona-icon" class="text-3xl bg-white w-12 h-12 rounded-xl border-2 border-slate-800 flex items-center justify-center">🔭</span>
+              <div>
+                <div class="text-xs font-bold text-slate-500">你的專屬演算法人格標籤</div>
+                <div id="builder-persona-name" class="font-black text-lg text-slate-900">知識探索型</div>
+              </div>
+            </div>
+            <div id="builder-perceived-summary" class="text-xs font-bold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-800">
+              自以為常看：搞笑迷因、電競遊戲
+            </div>
+          </div>
+
+          <!-- 基本資料：暱稱與年齡層 -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-black text-slate-800 mb-1.5">你的暱稱 / 代號 <span class="text-rose-500">*</span></label>
+              <input type="text" id="input-nickname" required maxlength="15" placeholder="例如：深夜不睡覺的貓、阿哲..."
+                class="w-full px-4 py-3 rounded-xl border-2 border-slate-800 bg-cream focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-bold text-sm" />
+            </div>
+            <div>
+              <label class="block text-sm font-black text-slate-800 mb-1.5">目前就讀 / 年齡層 <span class="text-rose-500">*</span></label>
+              <select id="input-age-group" required
+                class="w-full px-4 py-3 rounded-xl border-2 border-slate-800 bg-cream focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-bold text-sm">
+                <option value="國中生">🎒 國中生 (12-15歲)</option>
+                <option value="高中職生" selected>🏫 高中職生 (15-18歲)</option>
+                <option value="大學生">🎓 大學生 (18-22歲)</option>
+                <option value="其他青少年">✨ 其他 Z 世代</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 3 個代表性興趣標籤 -->
+          <div>
+            <label class="block text-sm font-black text-slate-800 mb-1">輸入 3 個你的代表性關鍵字標籤 <span class="text-rose-500">*</span></label>
+            <p class="text-xs text-slate-500 mb-2">讓同齡人一眼看出你的演算法宇宙（不用打 # 號，系統會自動加上）</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <input type="text" id="input-tag-1" required maxlength="10" placeholder="標籤1 (例: 獨立樂團)"
+                class="px-3.5 py-2.5 rounded-xl border-2 border-slate-800 bg-cream focus:bg-white focus:outline-none font-bold text-sm" />
+              <input type="text" id="input-tag-2" required maxlength="10" placeholder="標籤2 (例: 底片攝影)"
+                class="px-3.5 py-2.5 rounded-xl border-2 border-slate-800 bg-cream focus:bg-white focus:outline-none font-bold text-sm" />
+              <input type="text" id="input-tag-3" required maxlength="10" placeholder="標籤3 (例: 怪奇冷知識)"
+                class="px-3.5 py-2.5 rounded-xl border-2 border-slate-800 bg-cream focus:bg-white focus:outline-none font-bold text-sm" />
+            </div>
+          </div>
+
+          <!-- 1~3 個私藏寶藏推薦帳號 -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <label class="block text-sm font-black text-slate-800">私藏寶藏推薦帳號（1～3 個） <span class="text-rose-500">*</span></label>
+                <p class="text-xs text-slate-500">分享你最想推坑給同齡人的創作者、迷因帳或知識頻道！</p>
+              </div>
+              <button type="button" id="btn-add-account" onclick="addAccountField()" class="px-3 py-1.5 rounded-xl bg-sky-200 hover:bg-sky-300 border-2 border-slate-800 text-xs font-black shadow-pop transition-all">
+                + 新增一組帳號
+              </button>
+            </div>
+
+            <div id="accounts-container" class="space-y-3">
+              <!-- 預設第一組推薦帳號輸入框 -->
+              <div class="account-entry p-4 rounded-2xl bg-slate-50 border-2 border-slate-800 space-y-2.5 relative">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <select class="acc-platform px-3 py-2 rounded-xl border-2 border-slate-800 bg-white font-bold text-xs sm:text-sm">
+                    <option value="Instagram">📸 Instagram</option>
+                    <option value="YouTube">▶️ YouTube</option>
+                    <option value="TikTok">🎵 TikTok</option>
+                    <option value="Threads">🧵 Threads</option>
+                  </select>
+                  <input type="text" required placeholder="帳號名稱或 @ID (必填)" class="acc-handle sm:col-span-2 px-3 py-2 rounded-xl border-2 border-slate-800 bg-white font-bold text-xs sm:text-sm" />
+                </div>
+                <input type="text" required maxlength="45" placeholder="一句話推坑理由：為什麼大家該追蹤它？(必填)" class="acc-reason w-full px-3 py-2 rounded-xl border-2 border-slate-800 bg-white text-xs sm:text-sm font-medium" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 送出按鈕 -->
+          <div class="pt-2">
+            <button type="submit" class="w-full py-4 rounded-2xl bg-amber-300 hover:bg-amber-400 border-2 border-slate-800 font-black text-lg text-slate-900 shadow-pop-lg active:translate-y-1 transition-all flex items-center justify-center gap-2">
+              <span>📌 張貼到同齡演算法佈告欄！</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== 視圖 4：演算法佈告欄 (Board) ==================== -->
+    <section id="view-board" class="hidden animate-pop-in">
+      <!-- 佈告欄頂部控制列 -->
+      <div class="bg-cork border-2 border-slate-800 rounded-3xl p-5 sm:p-6 shadow-pop mb-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-800 text-xs font-black mb-2">
+              <span>📌 LIVE BOARD</span>
+              <span>•</span>
+              <span>點擊便利貼查看完整推薦清單</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900">同齡青少年演算法佈告欄</h1>
+          </div>
+
+          <!-- 右側互動功能：盲盒與我要張貼 -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button onclick="openRandomBlindBox()" class="px-4 py-2.5 rounded-xl bg-purple-300 hover:bg-purple-400 border-2 border-slate-800 font-black text-sm text-slate-900 shadow-pop active:translate-y-0.5 transition-all flex items-center gap-1.5">
+              <span>🎲</span>
+              <span>演算法盲盒（隨機抽）</span>
+            </button>
+            <button onclick="startQuiz()" class="px-4 py-2.5 rounded-xl bg-amber-300 hover:bg-amber-400 border-2 border-slate-800 font-black text-sm text-slate-900 shadow-pop active:translate-y-0.5 transition-all flex items-center gap-1.5">
+              <span>➕</span>
+              <span>測驗並張貼我的卡片</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 人格類型篩選器 -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1" id="filter-buttons">
+          <button onclick="filterBoard('ALL')" data-filter="ALL" class="filter-btn active px-4 py-2 rounded-xl border-2 border-slate-800 bg-slate-800 text-white font-bold text-xs sm:text-sm whitespace-nowrap transition-all">
+            🌈 全部類型
+          </button>
+          <button onclick="filterBoard('knowledge')" data-filter="knowledge" class="filter-btn px-4 py-2 rounded-xl border-2 border-slate-800 bg-white hover:bg-sky-100 text-slate-800 font-bold text-xs sm:text-sm whitespace-nowrap transition-all">
+            🔭 知識探索型
+          </button>
+          <button onclick="filterBoard('aesthetic')" data-filter="aesthetic" class="filter-btn px-4 py-2 rounded-xl border-2 border-slate-800 bg-white hover:bg-rose-100 text-slate-800 font-bold text-xs sm:text-sm whitespace-nowrap transition-all">
+            🎨 美感創造型
+          </button>
+          <button onclick="filterBoard('meme')" data-filter="meme" class="filter-btn px-4 py-2 rounded-xl border-2 border-slate-800 bg-white hover:bg-amber-100 text-slate-800 font-bold text-xs sm:text-sm whitespace-nowrap transition-all">
+            🤣 娛樂迷因型
+          </button>
+          <button onclick="filterBoard('healing')" data-filter="healing" class="filter-btn px-4 py-2 rounded-xl border-2 border-slate-800 bg-white hover:bg-emerald-100 text-slate-800 font-bold text-xs sm:text-sm whitespace-nowrap transition-all">
+            🌿 生活療癒型
+          </button>
+        </div>
+      </div>
+
+      <!-- 便利貼瀑布流 / 網格牆 -->
+      <div id="bulletin-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+        <!-- JS 動態渲染便利貼卡片 -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== 彈跳視窗 (Modal)：查看完整 Profile 與推薦帳號 ==================== -->
+  <div id="profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onclick="closeModalOnBackdrop(event)">
+    <div id="modal-card" class="bg-cream border-2 border-slate-800 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-pop-lg p-6 sm:p-7 relative animate-pop-in">
+      <!-- 關閉按鈕 -->
+      <button onclick="closeProfileModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white hover:bg-rose-100 border-2 border-slate-800 font-black text-slate-800 flex items-center justify-center shadow-pop transition-all">
+        ✕
+      </button>
+
+      <!-- Modal 內容由 JS 動態注入 -->
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- 輕量提示吐司 (Toast Message Box，取代 alert) -->
+  <div id="toast-box" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden">
+    <div class="px-5 py-3 rounded-2xl bg-slate-900 text-white border-2 border-amber-300 font-bold text-sm shadow-pop-lg flex items-center gap-2">
+      <span id="toast-icon">✅</span>
+      <span id="toast-text">提示訊息</span>
+    </div>
+  </div>
+
+  <!-- 页尾 -->
+  <footer class="border-t-2 border-slate-800 bg-white py-5 px-4 mt-12">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-bold text-slate-500">
+      <div>🧩 AlgoWall 青少年演算法探索與同儕推薦佈告欄</div>
+      <div>資料儲存於瀏覽器 LocalStorage • 探索屬於你的數位宇宙</div>
+    </div>
+  </footer>
+
+  <!-- ==================== JavaScript 核心邏輯 ==================== -->
+  <script>
+    // 1. 四種演算法人格定義
+    const PERSONAS = {
+      knowledge: {
+        id: 'knowledge',
+        name: '知識探索型',
+        icon: '🔭',
+        tagline: '#深夜維基百科流浪漢',
+        bgClass: 'bg-sky-100',
+        badgeClass: 'bg-sky-300',
+        borderClass: 'border-sky-400',
+        description: '你的演算法裡藏著一座小型博物館！從冷門歷史、科學原理到社會議題解析，只要開頭夠抓眼球，你就能不知不覺看完 15 分鐘的深度長片。你滑的不只是手機，是對世界的好奇心。'
+      },
+      aesthetic: {
+        id: 'aesthetic',
+        name: '美感創造型',
+        icon: '🎨',
+        tagline: '#靈感與排版強迫症患者',
+        bgClass: 'bg-rose-100',
+        badgeClass: 'bg-rose-300',
+        borderClass: 'border-rose-400',
+        description: '你對畫面構圖、色調與剪輯節奏有著雷達般的敏銳度！穿搭靈感、手作過程、獨立音樂或極簡桌面佈置都是你的最愛，你的「珍藏」分類夾簡直是一本線上流行美學雜誌。'
+      },
+      meme: {
+        id: 'meme',
+        name: '娛樂迷因型',
+        icon: '🤣',
+        tagline: '#群組梗圖即時供應商',
+        bgClass: 'bg-amber-100',
+        badgeClass: 'bg-amber-300',
+        borderClass: 'border-amber-400',
+        description: '演算法已經完全掌握你的笑點頻率！荒謬短影音、地獄梗圖、遊戲精華或實況主翻車現場總能精準命中你。你是朋友群組裡的快樂泉源，沒有你接不住的網路新梗。'
+      },
+      healing: {
+        id: 'healing',
+        name: '生活療癒型',
+        icon: '🌿',
+        tagline: '#雲端吸貓與精神避難所',
+        bgClass: 'bg-emerald-100',
+        badgeClass: 'bg-emerald-300',
+        borderClass: 'border-emerald-400',
+        description: '現實生活已經夠累了，滑手機對你來說是重要的「精神充電」！可愛小動物、深夜料理 ASMR、露營 Vlog 或溫暖語錄最能留住你的腳步，演算法把你的首頁打造成最舒服的避風港。'
+      }
+    };
+
+    // 2. 第一階段：5 題青少年滑手機情境測驗
+    const QUIZ_QUESTIONS = [
+      {
+        question: '凌晨 1 點半本來準備要睡了，結果手指不聽使喚又點開社群，是什麼樣的影片讓你停下來？',
+        options: [
+          { text: '「為什麼飛機窗戶都有一個小洞？」這類冷知識解說', type: 'knowledge' },
+          { text: '色調超高級的日本街拍 Vlog 或房間改造縮時', type: 'aesthetic' },
+          { text: '完全沒邏輯但音效超魔性的 5 秒荒謬迷因短片', type: 'meme' },
+          { text: '一隻小水豚頂著橘子泡溫泉的無聲療癒畫面', type: 'healing' }
+        ]
+      },
+      {
+        question: '打開你的「珍藏 / 稍後觀看」資料夾，裡面數量最多的是哪一種貼文？',
+        options: [
+          { text: '超實用的筆記術、書單推薦或 AI 工具懶人包', type: 'knowledge' },
+          { text: 'OOTD 穿搭範本、繪畫教學或想模仿的拍照姿勢', type: 'aesthetic' },
+          { text: '準備隨時傳給死黨互嗆的梗圖或爆笑翻車合輯', type: 'meme' },
+          { text: '看起來超好吃的甜點食譜，或週末想去踩點的咖啡廳', type: 'healing' }
+        ]
+      },
+      {
+        question: '滑到一個你「完全不認識」的創作者，什麼原因會讓你直接按下追蹤？',
+        options: [
+          { text: '他把超複雜的時事或科學講得連小學生都聽得懂', type: 'knowledge' },
+          { text: '他的版面排版、字體設計或個人風格實在太有質感', type: 'aesthetic' },
+          { text: '留言區比影片本體還好笑，整個頻道充滿歡樂氣氛', type: 'meme' },
+          { text: '看他記錄平凡卻真誠的日常，讓人覺得心情很平靜', type: 'healing' }
+        ]
+      },
+      {
+        question: '當你心情有點煩躁、不想動腦的時候，你會主動搜尋什麼來看？',
+        options: [
+          { text: '懸案推理分析或宇宙未解之謎，用別的謎題轉移注意力', type: 'knowledge' },
+          { text: '逛逛設計師作品、聽獨立音樂歌單尋找新靈感', type: 'aesthetic' },
+          { text: '看最愛的實況主精華或脫口秀段子大笑一場', type: 'meme' },
+          { text: '看萌寵日常、整理收納 ASMR 或切肥皂解壓影片', type: 'healing' }
+        ]
+      },
+      {
+        question: '如果你把手機借給好朋友滑 3 分鐘首頁推薦，你覺得他會給出什麼評語？',
+        options: [
+          { text: '「你的首頁也太像在準備百科全書比賽了吧！」', type: 'knowledge' },
+          { text: '「天啊，你的推薦頁怎麼連廣告都長得這麼好看？」', type: 'aesthetic' },
+          { text: '「你的演算法到底嗑了什麼，怎麼每篇都這麼好笑？」', type: 'meme' },
+          { text: '「滑你的手機感覺血壓都降下來了，好溫馨喔～」', type: 'healing' }
+        ]
+      }
+    ];
+
+    // 3. 第二階段：自我認知標籤選項
+    const SELF_PERCEIVED_OPTIONS = [
+      { id: '搞笑迷因', label: '🤣 搞笑迷因', matchType: 'meme' },
+      { id: '冷知識科普', label: '🧠 冷知識科普', matchType: 'knowledge' },
+      { id: '穿搭美妝', label: '👗 穿搭美妝', matchType: 'aesthetic' },
+      { id: '電競遊戲', label: '🎮 電競遊戲', matchType: 'meme' },
+      { id: '音樂藝術', label: '🎧 音樂藝術', matchType: 'aesthetic' },
+      { id: '萌寵日常', label: '🐶 萌寵日常', matchType: 'healing' },
+      { id: '美食探店', label: '🍜 美食探店', matchType: 'healing' },
+      { id: '學習成長', label: '📚 學習成長', matchType: 'knowledge' },
+      { id: '追星娛樂', label: '🌟 追星娛樂', matchType: 'aesthetic' }
+    ];
+
+    // 4. 預設 6 張同齡青少年範例 Profile 卡片
+    const DEFAULT_PROFILES = [
+      {
+        id: 'sample-1',
+        nickname: '半夜三點還在查資料',
+        ageGroup: '高中職生',
+        personaType: 'knowledge',
+        perceivedTags: ['搞笑迷因', '電競遊戲'],
+        tags: ['冷門歷史', '科普動畫', '腦洞大開'],
+        tilt: '-rotate-1',
+        accounts: [
+          { platform: 'YouTube', handle: '@Kurzgesagt 繁中版', reason: '動畫超精美，每次看完都覺得宇宙好大、段考好渺小！' },
+          { platform: 'Instagram', handle: '@strange_history_tw', reason: '專講課本不敢寫的歷史八卦，配飯看超讚' }
+        ]
+      },
+      {
+        id: 'sample-2',
+        nickname: '底片相機存錢中',
+        ageGroup: '大學生',
+        personaType: 'aesthetic',
+        perceivedTags: ['穿搭美妝', '音樂藝術'],
+        tags: ['CityPop', '古著穿搭', '色調靈感'],
+        tilt: 'rotate-1',
+        accounts: [
+          { platform: 'Instagram', handle: '@tokyo_film_diary', reason: '每一張街拍的顆粒感跟光影都神級好看，排版強迫症福音' },
+          { platform: 'YouTube', handle: '@Lofi Girl', reason: '趕報告跟讀書必開的背景音樂，沒有它我寫不出字' },
+          { platform: 'Threads', handle: '@ootd_archive_99', reason: '很多台灣高校跟大學生的真實平價穿搭分享' }
+        ]
+      },
+      {
+        id: 'sample-3',
+        nickname: '班群梗圖批發商',
+        ageGroup: '國中生',
+        personaType: 'meme',
+        perceivedTags: ['搞笑迷因', '電競遊戲'],
+        tags: ['地獄梗', '貓咪迷因', '實況精華'],
+        tilt: '-rotate-2',
+        accounts: [
+          { platform: 'Instagram', handle: '@daily_cat_error404', reason: '每天更新一隻當機的貓咪，心情不好滑一下直接笑出來' },
+          { platform: 'TikTok', handle: '@taiwan_meme_lab', reason: '台灣時事梗更新速度比新聞還快，留言區全都是人才' }
+        ]
+      },
+      {
+        id: 'sample-4',
+        nickname: '想養一隻黃金獵犬',
+        ageGroup: '高中職生',
+        personaType: 'healing',
+        perceivedTags: ['冷知識科普', '學習成長'],
+        tags: ['雲端吸狗', '深夜食堂', '露營ASMR'],
+        tilt: 'rotate-2',
+        accounts: [
+          { platform: 'YouTube', handle: '@Nino’s Home', reason: '沒有講話只有做甜點的療癒聲音，小貓偶爾還會入鏡！' },
+          { platform: 'Instagram', handle: '@golden_mochi_life', reason: '每天看阿金搖尾巴迎接主人，段考壓力瞬間消失一半' }
+        ]
+      },
+      {
+        id: 'sample-5',
+        nickname: '理科腦但愛畫畫',
+        ageGroup: '高中職生',
+        personaType: 'aesthetic',
+        perceivedTags: ['學習成長', '冷知識科普'],
+        tags: ['手帳拼貼', 'iPad電繪', '極簡桌面'],
+        tilt: '-rotate-1',
+        accounts: [
+          { platform: 'Instagram', handle: '@procreate_tips_tw', reason: '30 秒教會一個超實用的電繪筆刷技巧，新手超友善' },
+          { platform: 'YouTube', handle: '@study_with_hana', reason: '讀書 Vlog 拍得像日劇一樣有質感，看了會想乖乖打開課本' }
+        ]
+      },
+      {
+        id: 'sample-6',
+        nickname: '公車最後一排觀察家',
+        ageGroup: '大學生',
+        personaType: 'knowledge',
+        perceivedTags: ['美食探店', '追星娛樂'],
+        tags: ['心理學效應', '電影彩蛋', '城市建築'],
+        tilt: 'rotate-1',
+        accounts: [
+          { platform: 'Instagram', handle: '@psy_daily_note', reason: '用可愛插畫解釋日常心理學，超準又很好懂' },
+          { platform: 'YouTube', handle: '@超粒方', reason: '解析電影細節跟伏筆超神，看完電影必來補課' }
+        ]
+      }
+    ];
+
+    // ==================== 狀態管理 ====================
+    let currentStepIndex = 0;
+    let quizAnswers = new Array(QUIZ_QUESTIONS.length).fill(null);
+    let calculatedPersona = 'knowledge';
+    let selectedPerceivedTags = [];
+    let allProfiles = [];
+    let currentFilter = 'ALL';
+
+    // 初始化資料
+    function initApp() {
+      // 從 localStorage 讀取使用者新增的卡片
+      try {
+        const savedUserCards = JSON.parse(localStorage.getItem('algowall_user_profiles') || '[]');
+        allProfiles = [...savedUserCards, ...DEFAULT_PROFILES];
+      } catch (e) {
+        allProfiles = [...DEFAULT_PROFILES];
+      }
+
+      updateBoardBadge();
+      renderSelfTagsGrid();
+      renderBoard();
+    }
+
+    // 更新頂部佈告欄數量徽章
+    function updateBoardBadge() {
+      const badge = document.getElementById('board-count-badge');
+      if (badge) badge.textContent = allProfiles.length;
+    }
+
+    // 切換主要視圖
+    function switchView(viewName) {
+      const views = ['home', 'quiz', 'self-check', 'builder', 'board'];
+      views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) el.classList.add('hidden');
+      });
+
+      const target = document.getElementById(`view-${viewName}`);
+      if (target) {
+        target.classList.remove('hidden');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (viewName === 'board') {
+        renderBoard();
+      }
+    }
+
+    // ==================== 階段一：測驗邏輯 ====================
+    function startQuiz() {
+      currentStepIndex = 0;
+      quizAnswers = new Array(QUIZ_QUESTIONS.length).fill(null);
+      selectedPerceivedTags = [];
+      
+      // 重置第二階段畫面狀態
+      document.getElementById('self-check-form-box').classList.remove('hidden');
+      document.getElementById('reveal-result-box').classList.add('hidden');
+      renderSelfTagsGrid();
+
+      renderQuestion();
+      switchView('quiz');
+    }
+
+    function renderQuestion() {
+      const qData = QUIZ_QUESTIONS[currentStepIndex];
+      document.getElementById('quiz-progress-text').textContent = `第 ${currentStepIndex + 1} / ${QUIZ_QUESTIONS.length} 題`;
+      const progressPercent = ((currentStepIndex + 1) / QUIZ_QUESTIONS.length) * 100;
+      document.getElementById('quiz-progress-bar').style.width = `${progressPercent}%`;
+
+      document.getElementById('quiz-question').textContent = qData.question;
+
+      const optionsContainer = document.getElementById('quiz-options');
+      optionsContainer.innerHTML = '';
+
+      const letters = ['A', 'B', 'C', 'D'];
+      qData.options.forEach((opt, idx) => {
+        const isSelected = quizAnswers[currentStepIndex] === opt.type;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `w-full text-left p-4 rounded-2xl border-2 border-slate-800 font-bold text-sm sm:text-base transition-all flex items-start gap-3 ${
+          isSelected
+            ? 'bg-sky-300 shadow-pop -translate-y-0.5'
+            : 'bg-cream hover:bg-amber-100 hover:-translate-y-0.5'
+        }`;
+        btn.innerHTML = `
+          <span class="w-7 h-7 rounded-lg bg-white border-2 border-slate-800 flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
+            ${letters[idx]}
+          </span>
+          <span class="leading-snug">${opt.text}</span>
+        `;
+        btn.onclick = () => selectAnswer(opt.type);
+        optionsContainer.appendChild(btn);
+      });
+
+      document.getElementById('btn-prev-q').disabled = currentStepIndex === 0;
+    }
+
+    function selectAnswer(type) {
+      quizAnswers[currentStepIndex] = type;
+      renderQuestion();
+
+      setTimeout(() => {
+        if (currentStepIndex < QUIZ_QUESTIONS.length - 1) {
+          currentStepIndex++;
+          renderQuestion();
+        } else {
+          // 計算最高分人格，但先不公布結果，直接進入階段二
+          calculatePersona();
+          switchView('self-check');
+        }
+      }, 240);
+    }
+
+    function prevQuestion() {
+      if (currentStepIndex > 0) {
+        currentStepIndex--;
+        renderQuestion();
+      }
+    }
+
+    function calculatePersona() {
+      const scores = { knowledge: 0, aesthetic: 0, meme: 0, healing: 0 };
+      quizAnswers.forEach(ans => {
+        if (ans && scores[ans] !== undefined) {
+          scores[ans]++;
+        }
+      });
+
+      // 找出最高分
+      let maxType = 'knowledge';
+      let maxScore = -1;
+      for (const [key, val] of Object.entries(scores)) {
+        if (val > maxScore) {
+          maxScore = val;
+          maxType = key;
+        }
+      }
+      calculatedPersona = maxType;
+    }
+
+    // ==================== 階段二：自我認知與揭曉對比 ====================
+    function renderSelfTagsGrid() {
+      const grid = document.getElementById('self-tags-grid');
+      grid.innerHTML = '';
+
+      SELF_PERCEIVED_OPTIONS.forEach(item => {
+        const isChecked = selectedPerceivedTags.includes(item.id);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `p-3 rounded-2xl border-2 border-slate-800 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 ${
+          isChecked
+            ? 'bg-rose-300 shadow-pop -translate-y-0.5 text-slate-900'
+            : 'bg-cream hover:bg-slate-100 text-slate-700'
+        }`;
+        btn.innerHTML = `<span>${item.label}</span>`;
+        btn.onclick = () => toggleSelfTag(item.id);
+        grid.appendChild(btn);
+      });
+    }
+
+    function toggleSelfTag(tagId) {
+      if (selectedPerceivedTags.includes(tagId)) {
+        selectedPerceivedTags = selectedPerceivedTags.filter(t => t !== tagId);
+      } else {
+        if (selectedPerceivedTags.length >= 4) {
+          showToast('最多勾選 4 個最常看的類型喔！', '⚠️');
+          return;
+        }
+        selectedPerceivedTags.push(tagId);
+      }
+      renderSelfTagsGrid();
+    }
+
+    function revealResult() {
+      if (selectedPerceivedTags.length === 0) {
+        showToast('請至少勾選 1 個你覺得常看的內容類型！', '👉');
+        return;
+      }
+
+      const persona = PERSONAS[calculatedPersona];
+
+      // 填入「你以為的自己」標籤
+      const perceivedContainer = document.getElementById('result-perceived-tags');
+      perceivedContainer.innerHTML = selectedPerceivedTags
+        .map(tag => `<span class="px-3 py-1 rounded-xl bg-white border-2 border-slate-800 text-xs font-black text-slate-800">#${tag}</span>`)
+        .join('');
+
+      // 填入「實際人格」資訊
+      const actualCard = document.getElementById('result-actual-card');
+      actualCard.className = `${persona.bgClass} border-2 border-slate-800 rounded-2xl p-5 relative`;
+      document.getElementById('result-persona-icon').textContent = persona.icon;
+      document.getElementById('result-persona-title').textContent = persona.name;
+      document.getElementById('result-persona-tagline').textContent = persona.tagline;
+
+      // 判斷自覺與實際是否一致，產生反差評語
+      const matchedCount = selectedPerceivedTags.filter(tagId => {
+        const found = SELF_PERCEIVED_OPTIONS.find(o => o.id === tagId);
+        return found && found.matchType === calculatedPersona;
+      }).length;
+
+      const contrastBadge = document.getElementById('contrast-badge');
+      let contrastPrefix = '';
+
+      if (matchedCount > 0) {
+        contrastBadge.textContent = '🎯 人機合一！自我認知超精準';
+        contrastBadge.className = 'inline-block px-4 py-1.5 rounded-full bg-lime-300 border-2 border-slate-800 font-black text-xs sm:text-sm mb-3 shadow-pop';
+        contrastPrefix = `你非常了解自己的滑手機習慣！你自覺常看的「${selectedPerceivedTags.join('、')}」與測驗分析出的【${persona.name}】高度吻合。`;
+      } else {
+        contrastBadge.textContent = '⚡ 驚人反差！被演算法看穿的隱藏人格';
+        contrastBadge.className = 'inline-block px-4 py-1.5 rounded-full bg-amber-300 border-2 border-slate-800 font-black text-xs sm:text-sm mb-3 shadow-pop';
+        contrastPrefix = `表面上你以為自己都在看「${selectedPerceivedTags.join('、')}」，但其實你的潛意識與停留時間早就出賣了你——骨子裡你是標準的【${persona.name}】！`;
+      }
+
+      document.getElementById('result-analysis-text').textContent = `${contrastPrefix}${persona.description}`;
+
+      // 切換顯示揭曉卡片
+      document.getElementById('self-check-form-box').classList.add('hidden');
+      document.getElementById('reveal-result-box').classList.remove('hidden');
+    }
+
+    // ==================== 階段三：建立 Profile 表單 ====================
+    function goToProfileBuilder() {
+      const persona = PERSONAS[calculatedPersona];
+      document.getElementById('builder-persona-icon').textContent = persona.icon;
+      document.getElementById('builder-persona-name').textContent = persona.name;
+      document.getElementById('builder-perceived-summary').textContent = `自以為常看：${selectedPerceivedTags.join('、')}`;
+      switchView('builder');
+    }
+
+    function addAccountField() {
+      const container = document.getElementById('accounts-container');
+      const currentCount = container.querySelectorAll('.account-entry').length;
+
+      if (currentCount >= 3) {
+        showToast('最多可以推薦 3 個私藏帳號喔！', '📌');
+        return;
+      }
+
+      const entry = document.createElement('div');
+      entry.className = 'account-entry p-4 rounded-2xl bg-slate-50 border-2 border-slate-800 space-y-2.5 relative animate-pop-in';
+      entry.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-black text-slate-500">推薦帳號 #${currentCount + 1}</span>
+          <button type="button" onclick="removeAccountField(this)" class="text-xs font-bold text-rose-600 hover:underline">移除此項</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <select class="acc-platform px-3 py-2 rounded-xl border-2 border-slate-800 bg-white font-bold text-xs sm:text-sm">
+            <option value="Instagram">📸 Instagram</option>
+            <option value="YouTube">▶️ YouTube</option>
+            <option value="TikTok">🎵 TikTok</option>
+            <option value="Threads">🧵 Threads</option>
+          </select>
+          <input type="text" required placeholder="帳號名稱或 @ID (必填)" class="acc-handle sm:col-span-2 px-3 py-2 rounded-xl border-2 border-slate-800 bg-white font-bold text-xs sm:text-sm" />
+        </div>
+        <input type="text" required maxlength="45" placeholder="一句話推坑理由：為什麼大家該追蹤它？(必填)" class="acc-reason w-full px-3 py-2 rounded-xl border-2 border-slate-800 bg-white text-xs sm:text-sm font-medium" />
+      `;
+      container.appendChild(entry);
+    }
+
+    function removeAccountField(btn) {
+      btn.closest('.account-entry').remove();
+    }
+
+    function handlePublishProfile(e) {
+      e.preventDefault();
+
+      const nickname = document.getElementById('input-nickname').value.trim();
+      const ageGroup = document.getElementById('input-age-group').value;
+      const t1 = document.getElementById('input-tag-1').value.trim().replace(/^#/, '');
+      const t2 = document.getElementById('input-tag-2').value.trim().replace(/^#/, '');
+      const t3 = document.getElementById('input-tag-3').value.trim().replace(/^#/, '');
+
+      const entries = document.querySelectorAll('.account-entry');
+      const accounts = [];
+      entries.forEach(entry => {
+        const platform = entry.querySelector('.acc-platform').value;
+        const handle = entry.querySelector('.acc-handle').value.trim();
+        const reason = entry.querySelector('.acc-reason').value.trim();
+        if (handle && reason) {
+          accounts.push({ platform, handle, reason });
+        }
+      });
+
+      if (accounts.length === 0) {
+        showToast('請至少填寫 1 個推薦帳號與理由！', '⚠️');
+        return;
+      }
+
+      const tilts = ['-rotate-1', 'rotate-1', '-rotate-2', 'rotate-2'];
+      const randomTilt = tilts[Math.floor(Math.random() * tilts.length)];
+
+      const newProfile = {
+        id: 'user-' + Date.now(),
+        nickname,
+        ageGroup,
+        personaType: calculatedPersona,
+        perceivedTags: selectedPerceivedTags.length > 0 ? [...selectedPerceivedTags] : ['探索中'],
+        tags: [t1, t2, t3],
+        tilt: randomTilt,
+        isNew: true,
+        accounts
+      };
+
+      // 儲存至 localStorage 並加到最前面
+      try {
+        const existingSaved = JSON.parse(localStorage.getItem('algowall_user_profiles') || '[]');
+        existingSaved.unshift(newProfile);
+        localStorage.setItem('algowall_user_profiles', JSON.stringify(existingSaved));
+      } catch (err) {
+        console.warn('LocalStorage 儲存失敗', err);
+      }
+
+      allProfiles.unshift(newProfile);
+      updateBoardBadge();
+
+      // 重置篩選器為全部並跳轉到佈告欄
+      currentFilter = 'ALL';
+      updateFilterButtonsUI();
+      switchView('board');
+      showToast('成功將你的演算法便利貼釘上佈告欄！', '🎉');
+    }
+
+    // ==================== 階段四：佈告欄渲染與互動 ====================
+    function filterBoard(type) {
+      currentFilter = type;
+      updateFilterButtonsUI();
+      renderBoard();
+    }
+
+    function updateFilterButtonsUI() {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        const btnType = btn.getAttribute('data-filter');
+        if (btnType === currentFilter) {
+          btn.className = 'filter-btn active px-4 py-2 rounded-xl border-2 border-slate-800 bg-slate-800 text-white font-bold text-xs sm:text-sm whitespace-nowrap transition-all';
+        } else {
+          btn.className = 'filter-btn px-4 py-2 rounded-xl border-2 border-slate-800 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs sm:text-sm whitespace-nowrap transition-all';
+        }
+      });
+    }
+
+    function renderBoard() {
+      const grid = document.getElementById('bulletin-grid');
+      grid.innerHTML = '';
+
+      const filtered = currentFilter === 'ALL'
+        ? allProfiles
+        : allProfiles.filter(p => p.personaType === currentFilter);
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12 bg-white border-2 border-slate-800 rounded-3xl">
+            <div class="text-4xl mb-2">📭</div>
+            <p class="font-bold text-slate-600">這個分類目前還沒有便利貼，快來當第一個張貼的人吧！</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(profile => {
+        const persona = PERSONAS[profile.personaType] || PERSONAS.knowledge;
+        const card = document.createElement('article');
+        card.className = `sticky-card washi-tape cursor-pointer ${persona.bgClass} border-2 border-slate-800 rounded-2xl p-5 shadow-note ${profile.tilt || ''} flex flex-col justify-between relative`;
+        card.onclick = () => openProfileModal(profile.id);
+
+        // 右上角 NEW 標籤（如果是剛建立的）
+        const newBadge = profile.isNew
+          ? `<span class="absolute -top-3 -right-2 px-2.5 py-0.5 rounded-full bg-rose-500 text-white border-2 border-slate-800 text-xs font-black rotate-6 shadow-sm">NEW!</span>`
+          : '';
+
+        // 興趣標籤 HTML
+        const tagsHtml = profile.tags
+          .map(t => `<span class="px-2.5 py-0.5 rounded-lg bg-white/80 border border-slate-800 text-xs font-bold text-slate-800">#${t}</span>`)
+          .join('');
+
+        // 預覽第一個推薦帳號
+        const topAccount = profile.accounts[0];
+        const extraCount = profile.accounts.length > 1 ? `+${profile.accounts.length - 1} 個寶藏帳號` : '查看推薦理由';
+
+        card.innerHTML = `
+          ${newBadge}
+          <div>
+            <!-- 頂部：人格徽章與年齡層 -->
+            <div class="flex items-center justify-between gap-2 mb-3 pt-1">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl ${persona.badgeClass} border border-slate-800 text-xs font-black text-slate-900">
+                <span>${persona.icon}</span>
+                <span>${persona.name}</span>
+              </span>
+              <span class="text-xs font-bold text-slate-600 bg-white/70 px-2 py-0.5 rounded-lg border border-slate-800/30">
+                ${profile.ageGroup}
+              </span>
+            </div>
+
+            <!-- 暱稱與反差小字 -->
+            <h3 class="text-lg font-black text-slate-900 mb-1 truncate">${escapeHtml(profile.nickname)}</h3>
+            <p class="text-xs font-bold text-slate-600 mb-3 truncate">
+              自以為常看：${profile.perceivedTags.join('、')}
+            </p>
+
+            <!-- 3 個代表性興趣標籤 -->
+            <div class="flex flex-wrap gap-1.5 mb-4">
+              ${tagsHtml}
+            </div>
+          </div>
+
+          <!-- 底部：精選推薦帳號預覽框 -->
+          <div class="bg-white/90 border-2 border-slate-800 rounded-xl p-3">
+            <div class="flex items-center justify-between text-xs font-black text-slate-500 mb-1">
+              <span>⭐ 私藏推薦 (${topAccount.platform})</span>
+              <span class="text-indigo-600 underline">${extraCount} →</span>
+            </div>
+            <div class="font-extrabold text-sm text-slate-900 truncate">${escapeHtml(topAccount.handle)}</div>
+            <p class="text-xs text-slate-600 truncate mt-0.5">「${escapeHtml(topAccount.reason)}」</p>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    // 隨機抽一張（演算法盲盒）
+    function openRandomBlindBox() {
+      if (allProfiles.length === 0) return;
+      const randomIndex = Math.floor(Math.random() * allProfiles.length);
+      const chosen = allProfiles[randomIndex];
+      openProfileModal(chosen.id, true);
+    }
+
+    // 開啟完整 Profile Modal
+    function openProfileModal(profileId, isBlindBox = false) {
+      const profile = allProfiles.find(p => p.id === profileId);
+      if (!profile) return;
+
+      const persona = PERSONAS[profile.personaType] || PERSONAS.knowledge;
+      const modalContent = document.getElementById('modal-content');
+
+      const blindBoxBanner = isBlindBox
+        ? `<div class="mb-4 px-3 py-1.5 rounded-xl bg-purple-200 border-2 border-slate-800 text-xs font-black text-purple-950 inline-flex items-center gap-1.5">
+             <span>🎲 演算法盲盒抽中了這張便利貼！</span>
+           </div>`
+        : '';
+
+      const tagsHtml = profile.tags
+        .map(t => `<span class="px-3 py-1 rounded-xl bg-white border-2 border-slate-800 text-xs font-black text-slate-800">#${escapeHtml(t)}</span>`)
+        .join('');
+
+      const accountsHtml = profile.accounts
+        .map((acc, index) => `
+          <div class="p-4 rounded-2xl bg-white border-2 border-slate-800 shadow-pop flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-white text-xs font-bold">${escapeHtml(acc.platform)}</span>
+                <span class="font-black text-base text-slate-900">${escapeHtml(acc.handle)}</span>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-600 font-medium">💬 ${escapeHtml(acc.reason)}</p>
+            </div>
+            <button type="button" onclick="copyHandle('${escapeHtml(acc.handle).replace(/'/g, "\\'")}')"
+              class="shrink-0 px-3.5 py-2 rounded-xl bg-amber-300 hover:bg-amber-400 border-2 border-slate-800 text-xs font-black text-slate-900 active:translate-y-0.5 transition-all flex items-center justify-center gap-1">
+              <span>📋 複製 ID</span>
+            </button>
+          </div>
+        `)
+        .join('');
+
+      modalContent.innerHTML = `
+        ${blindBoxBanner}
+        <!-- 個人標題區 -->
+        <div class="flex items-center gap-3.5 mb-5 pr-8">
+          <div class="w-14 h-14 rounded-2xl ${persona.badgeClass} border-2 border-slate-800 flex items-center justify-center text-3xl shrink-0 shadow-pop">
+            ${persona.icon}
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900">${escapeHtml(profile.nickname)}</h2>
+              <span class="px-2.5 py-0.5 rounded-lg bg-white border border-slate-800 text-xs font-bold text-slate-700">${escapeHtml(profile.ageGroup)}</span>
+            </div>
+            <p class="text-xs font-bold text-slate-500 mt-0.5">${persona.tagline}</p>
+          </div>
+        </div>
+
+        <!-- 自覺 vs 實際人格對比框 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+          <div class="p-3.5 rounded-2xl bg-slate-100 border-2 border-slate-800">
+            <div class="text-xs font-black text-slate-500 mb-1">🧠 自覺常看內容</div>
+            <div class="font-extrabold text-sm text-slate-800">${profile.perceivedTags.join('、')}</div>
+          </div>
+          <div class="p-3.5 rounded-2xl ${persona.bgClass} border-2 border-slate-800">
+            <div class="text-xs font-black text-slate-600 mb-1">🤖 實際測驗人格</div>
+            <div class="font-black text-sm text-slate-900">${persona.icon} ${persona.name}</div>
+          </div>
+        </div>
+
+        <!-- 關鍵字標籤 -->
+        <div class="mb-6">
+          <div class="text-xs font-black text-slate-500 mb-2">🏷️ 演算法關鍵字宇宙</div>
+          <div class="flex flex-wrap gap-2">
+            ${tagsHtml}
+          </div>
+        </div>
+
+        <!-- 私藏寶藏推薦帳號清單 -->
+        <div>
+          <div class="text-sm font-black text-slate-900 mb-3 flex items-center gap-1.5">
+            <span>⭐ 私藏寶藏推薦帳號（點擊複製去搜尋追蹤）</span>
+          </div>
+          <div class="space-y-3">
+            ${accountsHtml}
+          </div>
+        </div>
+      `;
+
+      const modal = document.getElementById('profile-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeProfileModal() {
+      const modal = document.getElementById('profile-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function closeModalOnBackdrop(e) {
+      if (e.target.id === 'profile-modal') {
+        closeProfileModal();
+      }
+    }
+
+    // 複製帳號 ID (相容 iframe 環境)
+    function copyHandle(text) {
+      const tempInput = document.createElement('input');
+      tempInput.value = text;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      try {
+        document.execCommand('copy');
+        showToast(`已複製「${text}」，快去社群搜尋吧！`, '📋');
+      } catch (err) {
+        showToast(`帳號 ID：${text}`, '✨');
+      }
+      document.body.removeChild(tempInput);
+    }
+
+    // 輕量提示框 (Toast)
+    let toastTimer = null;
+    function showToast(message, icon = '✅') {
+      const toastBox = document.getElementById('toast-box');
+      document.getElementById('toast-text').textContent = message;
+      document.getElementById('toast-icon').textContent = icon;
+
+      toastBox.classList.remove('hidden');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastBox.classList.add('hidden');
+      }, 2800);
+    }
+
+    // XSS 防護字串轉義
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // 啟動應用
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
